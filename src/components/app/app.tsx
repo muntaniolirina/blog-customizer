@@ -8,16 +8,8 @@ import { defaultArticleState } from 'src/constants/articleProps';
 import styles from './app.module.scss';
 
 export const App = () => {
-	// состояние панели
-	const [isOpen, setOpen] = useState(false);
-
-	// состояние параметров статьи
+	// Состояние параметров статьи
 	const [articleState, setArticleState] = useState(defaultArticleState);
-
-	// функция для открытия/закрытия панели
-	const toggleForm = () => {
-		setOpen((previousValue) => !previousValue);
-	};
 
 	return (
 		<main
@@ -31,11 +23,7 @@ export const App = () => {
 					'--bg-color': articleState.backgroundColor.value,
 				} as CSSProperties
 			}>
-			<ArticleParamsForm
-				isOpen={isOpen}
-				onToggle={toggleForm}
-				onApply={setArticleState}
-			/>
+			<ArticleParamsForm onApply={setArticleState} />
 			<Article />
 		</main>
 	);

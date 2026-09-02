@@ -6,6 +6,7 @@ import { Button } from 'src/ui/button';
 import { Select } from 'src/ui/select';
 import { RadioGroup } from 'src/ui/radio-group';
 import { Separator } from 'src/ui/separator';
+import { Text } from 'src/ui/text';
 
 import type { OptionType, ArticleStateType } from 'src/constants/articleProps';
 
@@ -23,43 +24,51 @@ import { useClosePanelOnOutsideClick } from './hooks/useClosePanelOnOutsideClick
 import styles from './ArticleParamsForm.module.scss';
 
 type ArticleParamsFormProps = {
-	isOpen: boolean;
-	onToggle: () => void;
 	onApply: (articleState: ArticleStateType) => void;
 };
 
-export const ArticleParamsForm = ({
-	isOpen,
-	onToggle,
-	onApply,
-}: ArticleParamsFormProps) => {
-	// ссылка на <aside> - для отслеживания клика вне области
+export const ArticleParamsForm = ({ onApply }: ArticleParamsFormProps) => {
+	// Состояние панели
+	const [isOpen, setIsOpen] = useState(false);
+
+	// Состояние формы
+	const [formState, setFormState] =
+		useState<ArticleStateType>(defaultArticleState);
+
+	// Ссылки на элементы панели для отслеживания клика вне нее
 	const sidebarRef = useRef<HTMLElement | null>(null);
-	// ссылка на область со стрелкой - для отслеживания клика вне области
 	const arrowButtonRef = useRef<HTMLDivElement | null>(null);
 
-	// Закрываем панель при клике вне панели и кнопки-стрелки
+	// Обработчики панели
+
+	// Переключает состояние панели
+	const toggleForm = () => {
+		setIsOpen((previousValue) => !previousValue);
+	};
+
+	// Закрывает панель
+	const closeForm = () => {
+		setIsOpen(false);
+	};
+
+	// Закрывает панель при клике вне неё
 	useClosePanelOnOutsideClick({
 		isOpen,
 		sidebarRef,
 		arrowButtonRef,
-		onClose: onToggle,
+		onClose: closeForm,
 	});
 
-	// --- СОСТОЯНИЯ---
-	const [formState, setFormState] =
-		useState<ArticleStateType>(defaultArticleState);
+	// Обработчики формы
 
-	// --- ОБРАБОТЧИКИ---
-
-	//обработчик нажатия на кнопку применения
+	// Применяет настройки формы
 	const handleApply = (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
 		onApply(formState);
 	};
 
-	//обработчик нажатия на кнопку сброса
+	// Сбрасывает настройки формы
 	const handleReset = (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
@@ -67,31 +76,26 @@ export const ArticleParamsForm = ({
 		onApply(defaultArticleState);
 	};
 
-	// универсальный обработчик изменения любой настройки формы
-	// key — имя поля в состоянии formState. option — новое выбранное значение.
-	// Обновляем только указанное поле, сохраняя остальные настройки.
-	const handleOptionChange = (
-		key: keyof ArticleStateType,
-		option: OptionType
-	) => {
-		setFormState((prevState) => {
-			return {
-				// копируем предыдущее состояние
+	// Создаёт обработчик для обновления указанного поля формы.
+	// Получает имя поля и возвращает функцию,
+	// которая принимает новое выбранное значение.
+	const updateFormField = (field: keyof ArticleStateType) => {
+		return (value: OptionType) => {
+			setFormState((prevState) => ({
 				...prevState,
-				// обновляем только поле, имя которого передано в key.
-				[key]: option,
-			};
-		});
+				[field]: value,
+			}));
+		};
 	};
 
 	return (
 		<>
 			<div ref={arrowButtonRef}>
-				{/* обернули стрелку в div чтобы отслеживать клики в ее области */}
-				<ArrowButton isOpen={isOpen} onClick={onToggle} />
+				{/* Оборачиваем стрелку в div, чтобы отслеживать клики в её области */}
+				<ArrowButton isOpen={isOpen} onClick={toggleForm} />
 			</div>
 
-			{/* если isOpen true, дополнительно добавится класс container_open */}
+			{/* При isOpen добавляется класс container_open */}
 			<aside
 				ref={sidebarRef}
 				className={clsx(styles.container, {
@@ -101,39 +105,40 @@ export const ArticleParamsForm = ({
 					className={styles.form}
 					onSubmit={handleApply}
 					onReset={handleReset}>
+					<Text as='h2' size={31} weight={800} uppercase>
+						Задайте параметры
+					</Text>
 					<Select
 						title='Шрифт'
 						options={fontFamilyOptions}
 						selected={formState.fontFamilyOption}
-						onChange={(option) =>
-							handleOptionChange('fontFamilyOption', option)
-						}
+						onChange={updateFormField('fontFamilyOption')}
 					/>
 					<RadioGroup
 						name='font-size'
 						title='Размер шрифта'
 						options={fontSizeOptions}
 						selected={formState.fontSizeOption}
-						onChange={(option) => handleOptionChange('fontSizeOption', option)}
+						onChange={updateFormField('fontSizeOption')}
 					/>
 					<Select
 						title='Цвет шрифта'
 						options={fontColors}
 						selected={formState.fontColor}
-						onChange={(option) => handleOptionChange('fontColor', option)}
+						onChange={updateFormField('fontColor')}
 					/>
 					<Separator />
 					<Select
 						title='Цвет фона'
 						options={backgroundColors}
 						selected={formState.backgroundColor}
-						onChange={(option) => handleOptionChange('backgroundColor', option)}
+						onChange={updateFormField('backgroundColor')}
 					/>
 					<Select
 						title='Ширина контента'
 						options={contentWidthArr}
 						selected={formState.contentWidth}
-						onChange={(option) => handleOptionChange('contentWidth', option)}
+						onChange={updateFormField('contentWidth')}
 					/>
 					<div className={styles.bottomContainer}>
 						<Button title='Сбросить' htmlType='reset' type='clear' />
